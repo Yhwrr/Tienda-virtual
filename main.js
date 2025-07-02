@@ -24,6 +24,7 @@ const successModal = document.getElementById('successModal');
 const confirmPurchase = document.getElementById('confirmPurchase');
 const modalOrderSummary = document.getElementById('modalOrderSummary');
 const modalTotalPrice = document.getElementById('modalTotalPrice');
+const favorites = document.getElementById('favorites')
 
 // New favorites elements
 const favoritesToggle = document.getElementById('favoritesToggle');
@@ -756,3 +757,7 @@ document.addEventListener('visibilitychange', function () {
         setTimeout(cleanupModalsAndScroll, 100);
     }
 });
+
+function.favorites(){
+    favorites
+}
