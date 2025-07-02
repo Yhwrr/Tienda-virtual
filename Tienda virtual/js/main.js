@@ -1,6 +1,7 @@
 let allProducts = [];
 let filteredProducts = [];
 let cart = [];
+let favorites = []; // New favorites array
 let categories = [];
 
 const productsContainer = document.getElementById('productsContainer');
@@ -24,8 +25,17 @@ const confirmPurchase = document.getElementById('confirmPurchase');
 const modalOrderSummary = document.getElementById('modalOrderSummary');
 const modalTotalPrice = document.getElementById('modalTotalPrice');
 
+// New favorites elements
+const favoritesToggle = document.getElementById('favoritesToggle');
+const favoritesSidebar = document.getElementById('favoritesSidebar');
+const closeFavorites = document.getElementById('closeFavorites');
+const favoritesItems = document.getElementById('favoritesItems');
+const favoritesCount = document.getElementById('favoritesCount');
+const showFavoritesOnly = document.getElementById('showFavoritesOnly');
+
 document.addEventListener('DOMContentLoaded', function () {
     loadCartFromStorage();
+    loadFavoritesFromStorage(); // Load favorites on page load
     fetchProducts();
     setupEventListeners();
     setupModalEventListeners();
@@ -112,6 +122,17 @@ function setupEventListeners() {
     cartOverlay.addEventListener('click', toggleCart);
     checkoutBtn.addEventListener('click', showCheckoutModal);
     confirmPurchase.addEventListener('click', processPurchase);
+    
+    // New favorites event listeners
+    if (favoritesToggle) {
+        favoritesToggle.addEventListener('click', toggleFavorites);
+    }
+    if (closeFavorites) {
+        closeFavorites.addEventListener('click', toggleFavorites);
+    }
+    if (showFavoritesOnly) {
+        showFavoritesOnly.addEventListener('change', filterAndRenderProducts);
+    }
 }
 
 async function fetchProducts() {
@@ -156,6 +177,7 @@ function filterAndRenderProducts() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const selectedCategory = categoryFilter.value;
     const sortOption = sortSelect.value;
+    const showOnlyFavorites = showFavoritesOnly ? showFavoritesOnly.checked : false;
 
     filteredProducts = allProducts.filter(product => {
         const matchesSearch = searchTerm === '' ||
@@ -163,8 +185,10 @@ function filterAndRenderProducts() {
             product.description.toLowerCase().includes(searchTerm);
 
         const matchesCategory = selectedCategory === '' || product.category === selectedCategory;
+        
+        const matchesFavorites = !showOnlyFavorites || isProductInFavorites(product.id);
 
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesCategory && matchesFavorites;
     });
 
     if (sortOption) {
@@ -211,10 +235,20 @@ function renderProducts() {
 function createProductCard(product) {
     const col = document.createElement('div');
     col.className = 'col-lg-3 col-md-4 col-sm-6 mb-4';
+    
+    const isFavorite = isProductInFavorites(product.id);
+    const favoriteClass = isFavorite ? 'active' : '';
+    const favoriteIcon = isFavorite ? 'bi-heart-fill' : 'bi-heart';
 
     col.innerHTML = `
         <div class="card product-card fade-in">
-            <img src="${product.image}" alt="${product.title}" class="product-image">
+            <div class="position-relative">
+                <img src="${product.image}" alt="${product.title}" class="product-image">
+                <button class="favorite-btn ${favoriteClass}" onclick="toggleFavorite(${product.id})" 
+                        title="${isFavorite ? 'Eliminar de favoritos' : 'Agregar a favoritos'}">
+                    <i class="bi ${favoriteIcon}"></i>
+                </button>
+            </div>
             <div class="card-body d-flex flex-column">
                 <h5 class="product-title">${product.title}</h5>
                 <div class="product-category">${capitalizeFirstLetter(product.category)}</div>
@@ -230,6 +264,218 @@ function createProductCard(product) {
 
     return col;
 }
+
+// ====== FAVORITES FUNCTIONALITY ======
+
+function toggleFavorite(productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const favoriteIndex = favorites.findIndex(fav => fav.id === productId);
+    
+    if (favoriteIndex === -1) {
+        // Add to favorites
+        favorites.push({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            image: product.image,
+            category: product.category,
+            dateAdded: new Date().toISOString()
+        });
+        showFavoriteAnimation(productId, true);
+    } else {
+        // Remove from favorites
+        favorites.splice(favoriteIndex, 1);
+        showFavoriteAnimation(productId, false);
+    }
+    
+    updateFavoritesUI();
+    saveFavoritesToStorage();
+    
+    // Re-render products to update favorite buttons
+    renderProducts();
+}
+
+function isProductInFavorites(productId) {
+    return favorites.some(fav => fav.id === productId);
+}
+
+function updateFavoritesUI() {
+    updateFavoritesCount();
+    renderFavoritesItems();
+}
+
+function updateFavoritesCount() {
+    if (favoritesCount) {
+        favoritesCount.textContent = favorites.length;
+        
+        if (favorites.length > 0) {
+            favoritesCount.style.display = 'flex';
+            favoritesCount.classList.add('bounce');
+            setTimeout(() => favoritesCount.classList.remove('bounce'), 500);
+        } else {
+            favoritesCount.style.display = 'none';
+        }
+    }
+}
+
+function renderFavoritesItems() {
+    if (!favoritesItems) return;
+    
+    if (favorites.length === 0) {
+        favoritesItems.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-heart" style="font-size: 3rem; color: var(--dark-gray);"></i>
+                <h5 class="mt-3 text-muted">No tienes favoritos</h5>
+                <p class="text-muted">¡Marca algunos productos como favoritos!</p>
+            </div>
+        `;
+        return;
+    }
+
+    favoritesItems.innerHTML = '';
+
+    favorites.forEach(item => {
+        const favoriteItem = document.createElement('div');
+        favoriteItem.className = 'favorite-item mb-3';
+        favoriteItem.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-3">
+                    <img src="${item.image}" alt="${item.title}" class="img-fluid rounded">
+                </div>
+                <div class="col-6">
+                    <h6 class="mb-1">${item.title.substring(0, 40)}...</h6>
+                    <div class="fw-bold text-primary">$${item.price.toFixed(2)}</div>
+                    <small class="text-muted">${capitalizeFirstLetter(item.category)}</small>
+                </div>
+                <div class="col-3 text-end">
+                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="addToCart(${item.id})" 
+                            title="Agregar al carrito">
+                        <i class="bi bi-cart-plus"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="toggleFavorite(${item.id})" 
+                            title="Eliminar de favoritos">
+                        <i class="bi bi-heart-fill"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        favoritesItems.appendChild(favoriteItem);
+    });
+}
+
+function toggleFavorites() {
+    if (!favoritesSidebar) return;
+    
+    const isActive = favoritesSidebar.classList.contains('active');
+
+    if (isActive) {
+        favoritesSidebar.classList.remove('active');
+        cartOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    } else {
+        // Close cart if open
+        cartSidebar.classList.remove('active');
+        
+        favoritesSidebar.classList.add('active');
+        cartOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Update favorites display
+        renderFavoritesItems();
+    }
+}
+
+function showFavoriteAnimation(productId, isAdded) {
+    // Find the favorite button for this product
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        const button = card.querySelector('.favorite-btn');
+        const cartButton = card.querySelector('.btn-add-cart');
+        
+        // Check if this is the right product by looking at the onclick attribute
+        if (cartButton && cartButton.getAttribute('onclick').includes(`addToCart(${productId})`)) {
+            const icon = button.querySelector('i');
+            
+            if (isAdded) {
+                button.classList.add('active');
+                icon.className = 'bi bi-heart-fill';
+                button.classList.add('pulse-heart');
+                
+                // Show floating heart animation
+                showFloatingHeart(button);
+            } else {
+                button.classList.remove('active');
+                icon.className = 'bi bi-heart';
+            }
+            
+            setTimeout(() => {
+                button.classList.remove('pulse-heart');
+            }, 600);
+        }
+    });
+    
+    // Update favorites count with animation
+    if (favoritesCount) {
+        favoritesCount.classList.add('pulse');
+        setTimeout(() => favoritesCount.classList.remove('pulse'), 1000);
+    }
+}
+
+function showFloatingHeart(button) {
+    const heart = document.createElement('div');
+    heart.innerHTML = '<i class="bi bi-heart-fill"></i>';
+    heart.className = 'floating-heart';
+    
+    const rect = button.getBoundingClientRect();
+    heart.style.position = 'fixed';
+    heart.style.left = rect.left + rect.width / 2 + 'px';
+    heart.style.top = rect.top + 'px';
+    heart.style.color = '#e91e63';
+    heart.style.fontSize = '1.5rem';
+    heart.style.pointerEvents = 'none';
+    heart.style.zIndex = '9999';
+    heart.style.animation = 'floatUp 1.5s ease-out forwards';
+    
+    document.body.appendChild(heart);
+    
+    setTimeout(() => {
+        heart.remove();
+    }, 1500);
+}
+
+function saveFavoritesToStorage() {
+    try {
+        // Using window property instead of localStorage for Claude.ai compatibility
+        window.savedFavorites = favorites;
+    } catch (error) {
+        console.error('Error saving favorites:', error);
+    }
+}
+
+function loadFavoritesFromStorage() {
+    try {
+        if (window.savedFavorites) {
+            favorites = window.savedFavorites;
+            updateFavoritesUI();
+        }
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+        favorites = [];
+    }
+}
+
+function clearAllFavorites() {
+    if (confirm('¿Estás seguro de que quieres eliminar todos los favoritos?')) {
+        favorites = [];
+        updateFavoritesUI();
+        saveFavoritesToStorage();
+        renderProducts(); // Re-render to update favorite buttons
+    }
+}
+
+// ====== END FAVORITES FUNCTIONALITY ======
 
 function addToCart(productId) {
     const product = allProducts.find(p => p.id === productId);
@@ -407,6 +653,9 @@ function toggleCart() {
         cartOverlay.classList.remove('active');
         document.body.style.overflow = '';
     } else {
+        // Close favorites if open
+        if (favoritesSidebar) favoritesSidebar.classList.remove('active');
+        
         cartSidebar.classList.add('active');
         cartOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -475,10 +724,16 @@ function showCartAnimation() {
 
 // Responsive handling
 window.addEventListener('resize', function () {
-    if (window.innerWidth > 768 && cartSidebar.classList.contains('active')) {
-        cartSidebar.style.width = '400px';
+    if (window.innerWidth > 768) {
+        if (cartSidebar.classList.contains('active')) {
+            cartSidebar.style.width = '400px';
+        }
+        if (favoritesSidebar && favoritesSidebar.classList.contains('active')) {
+            favoritesSidebar.style.width = '400px';
+        }
     } else if (window.innerWidth <= 768) {
         cartSidebar.style.width = '100%';
+        if (favoritesSidebar) favoritesSidebar.style.width = '100%';
     }
 });
 
@@ -492,6 +747,7 @@ function cleanupModalsAndScroll() {
     });
 
     cartSidebar.classList.remove('active');
+    if (favoritesSidebar) favoritesSidebar.classList.remove('active');
     cartOverlay.classList.remove('active');
 }
 
