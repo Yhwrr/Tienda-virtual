@@ -23,6 +23,7 @@ const successModal = document.getElementById('successModal');
 const confirmPurchase = document.getElementById('confirmPurchase');
 const modalOrderSummary = document.getElementById('modalOrderSummary');
 const modalTotalPrice = document.getElementById('modalTotalPrice');
+const favorites = document.getElementById('favorites')
 
 document.addEventListener('DOMContentLoaded', function () {
     loadCartFromStorage();
@@ -500,3 +501,7 @@ document.addEventListener('visibilitychange', function () {
         setTimeout(cleanupModalsAndScroll, 100);
     }
 });
+
+function.favorites(){
+    favorites
+}

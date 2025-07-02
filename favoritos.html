@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopMart - Tu Tienda Online</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shop"></i> ShopMart
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-house"></i> Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-grid"></i> Favoritos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-fire"></i> Ofertas</a>
+                    </li>
+                </ul>
+                <button class="btn btn-outline-light d-flex align-items-center" id="cartToggle">
+                    <i class="bi bi-cart3"></i>
+                    <span class="ms-2">Carrito</span>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search and Filters Section -->
+    <div class="search-section">
+        <div class="container">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label fw-bold">
+                        <i class="bi bi-search"></i> Buscar productos
+                    </label>
+                    <input type="text" class="form-control search-input" id="searchInput" 
+                           placeholder="Busca por nombre o descripción...">
+                </div>
+                <div class="col-md-3">
+                    <label for="categoryFilter" class="form-label fw-bold">
+                        <i class="bi bi-funnel"></i> Categoría
+                    </label>
+                    <select class="form-select filter-select" id="categoryFilter">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="sortSelect" class="form-label fw-bold">
+                        <i class="bi bi-sort-down"></i> Ordenar por
+                    </label>
+                    <select class="form-select filter-select" id="sortSelect">
+                        <option value="">Orden por defecto</option>
+                        <option value="price-asc">Precio: Menor a Mayor</option>
+                        <option value="price-desc">Precio: Mayor a Menor</option>
+                        <option value="name-asc">Nombre: A-Z</option>
+                        <option value="name-desc">Nombre: Z-A</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
